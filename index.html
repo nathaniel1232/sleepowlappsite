@@ -154,34 +154,6 @@
   </div>
 </section>
 
-<!-- How it works -->
-<section id="how">
-  <div class="container">
-    <div style="text-align:center" class="reveal">
-      <p class="section-label">How it works</p>
-      <h2>Three steps</h2>
-    </div>
-
-    <div class="steps">
-      <div class="step reveal reveal-delay-1">
-        <div class="step-num">1</div>
-        <h3>Set your sleep goal</h3>
-        <p>Pick a bedtime and wake target. SleepOwl builds your wind-down schedule around it.</p>
-      </div>
-      <div class="step reveal reveal-delay-2">
-        <div class="step-num">2</div>
-        <h3>Complete nightly quests</h3>
-        <p>Breathe, journal, put the phone down. Earn dream stars every night.</p>
-      </div>
-      <div class="step reveal reveal-delay-3">
-        <div class="step-num">3</div>
-        <h3>Watch your owl grow</h3>
-        <p>Consistent sleep unlocks new growth stages and rare owl forms.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- CTA -->
 <section id="cta">
   <div class="container">
@@ -284,36 +256,47 @@
   });
 })();
 
-/* ── Waitlist forms ─────────────────────────────── */
-/*
- * To receive emails: sign up at https://formspree.io, create a form,
- * then replace the fetch URL below with your endpoint:
- *   https://formspree.io/f/YOUR_FORM_ID
- */
+/* ── Waitlist — Supabase ────────────────────────── */
+const SUPA_URL = 'https://rolfumfceqykfobvryoy.supabase.co';
+const SUPA_KEY = 'sb_publishable___T_9N3PJA9yEj6oRnimSg_9x1hN4hl';
+
+async function submitEmail(email) {
+  const res = await fetch(`${SUPA_URL}/rest/v1/waitlist`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPA_KEY,
+      'Authorization': `Bearer ${SUPA_KEY}`,
+      'Prefer': 'return=minimal',
+    },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok && res.status !== 409) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || res.status);
+  }
+  // 409 = duplicate email, still treat as success
+}
+
 function handleForm(formId, successId) {
   const form    = document.getElementById(formId);
   const success = document.getElementById(successId);
   if (!form) return;
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
-    const btn = form.querySelector('button');
+    const btn   = form.querySelector('button');
+    const email = form.querySelector('input[type="email"]').value.trim();
     btn.textContent = 'Joining…';
     btn.disabled = true;
-
-    // --- uncomment and fill in your Formspree ID to go live ---
-    // try {
-    //   await fetch('https://formspree.io/f/YOUR_FORM_ID', {
-    //     method: 'POST',
-    //     headers: { 'Accept': 'application/json' },
-    //     body: new FormData(form),
-    //   });
-    // } catch (_) {}
-
-    // simulate for now
-    await new Promise(r => setTimeout(r, 600));
-
-    form.style.display = 'none';
-    success.style.display = 'flex';
+    try {
+      await submitEmail(email);
+      form.style.display = 'none';
+      success.style.display = 'flex';
+    } catch (err) {
+      btn.textContent = 'Try again';
+      btn.disabled = false;
+      console.error('Waitlist error:', err);
+    }
   });
 }
 
